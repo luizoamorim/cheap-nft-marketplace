@@ -1,0 +1,90 @@
+# Byte-compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.cache
+*.coverage
+*.log
+*.pot
+*.py[co]
+*.sqlite3
+db.sqlite3
+*.sw[op]
+
+# Django related
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+
+# If using Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Databases
+*.db
+*.db.*
+*.sql
+*.sqlite3
+*.sqlite3-journal
+
+# Virtual environments
+venv/
+myenv/
+env/
+ENV/
+
+# IDEs and editors
+# PyCharm, IntelliJ
+.idea/
+
+# VS Code
+.vscode/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Operating systems
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Python environment files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+logs/
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+*.sw[op]
+*.rej
