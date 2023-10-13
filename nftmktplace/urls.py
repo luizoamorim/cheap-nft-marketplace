@@ -21,4 +21,8 @@ from marketplace import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("list/", views.list_nft, name="list_nft"),
+    path("purchaseOrder/", views.purchase_order, name="purchase_order"),
+    path("bidOrder/", views.bid_order, name="bid_order"),
+    path("settlePurchaseOrder/", views.settlePurchaseOrder,
+         name="settlePurchaseOrder"),
 ]

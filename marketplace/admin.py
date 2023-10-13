@@ -1,7 +1,7 @@
 """
 This module defines the admin interfaces for the models in the NFT marketplace app.
 
-Here, you can configure how the models of this app are displayed and managed in 
+Here, you can configure how the models of this app are displayed and managed in
 Django's built-in admin site.
 """
 

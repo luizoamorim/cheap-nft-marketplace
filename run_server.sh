@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Format the code using black
-black nftmktplace/
+autopep8 nftmktplace/
 
 # Run pylint for linting
 pylint marketplace/
