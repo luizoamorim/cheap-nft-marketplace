@@ -146,11 +146,9 @@ def purchase_order(request):
     """
     if request.method == "POST":
         data = json.loads(request.body)
-        print("DATA: ", data)
 
         try:
             validated_data = NFTPurchaseIntent(**data)
-            print("validated_data: ", validated_data)
 
             nft_collection_address = validated_data.nftCollectionAddress
             token_id = validated_data.tokenId
@@ -199,7 +197,8 @@ def purchase_order(request):
 
             # Recreate the message hash
             message = w3_instance.solidity_keccak(['address', 'address', 'uint256', 'uint256'],
-                                                  [nft_collection_address, erc20_address, token_id, int(erc20_amount)]
+                                                  [nft_collection_address, erc20_address, token_id, int(
+                                                      erc20_amount)]
                                                   )
 
             # Encode the message and recover the buyer signature
@@ -282,23 +281,8 @@ def bid_order(request):
                 return JsonResponse(
                     {"error": "Listing is not for auction."}, status=400)
 
-            # Create the message hash
-            message = Web3.soliditySha3(
-                ['address', 'address', 'uint256', 'uint256'],
-                [nft_collection_address, erc20_address, token_id, erc20_amount]
-            )
-
-            # Recover the bidder's address from the signature
-            recovered_bidder_address = Web3.eth.account.recoverHash(
-                message, signature=bidder_sig)
-
-            # Ensure recovered address matches provided buyer address
-            if recovered_bidder_address != buyer_address:
-                return {
-                    "error": "Signature does not match the provided buyer address."}
-
             # Check if the auction has already started
-            latest_bid = bid_intents[sale_id][-1] if bid_intents[sale_id] else None
+            latest_bid = bid_intents[sale_id][- 1] if sale_id in bid_intents else None
 
             if latest_bid and latest_bid["erc20Amount"] >= erc20_amount:
                 # Ensure the bid is higher than the current bid
@@ -306,8 +290,30 @@ def bid_order(request):
                     {"error": "Bid must be higher than the current bid"}, status=400
                 )
 
+            # Create a web3 instance
+            w3_instance = Web3(Web3.HTTPProvider(config("PROVIDER_URL")))
+
+            # Recreate the message hash
+            message = w3_instance.solidity_keccak(['address', 'address', 'uint256', 'uint256'],
+                                                  [nft_collection_address, erc20_address, token_id, int(
+                                                      erc20_amount)]
+                                                  )
+
+            # Encode the message and recover the buyer signature
+            signable_message = encode_defunct(hexstr=message.hex())
+            recovered_bidder_address = w3_instance.eth.account.recover_message(
+                signable_message,
+                signature=bidder_sig
+            )
+
+            # Ensure recovered address matches provided buyer address
+            if recovered_bidder_address != buyer_address:
+                return JsonResponse(
+                    {"error": "Signature does not match the provided buyer address."}, status=400)
+
             # Construct auction data
             bid_intent = {
+                "sale_id": listing["saleId"],
                 "nftCollectionAddress": listing["nftCollectionAddress"],
                 "erc20Address": listing["erc20Address"],
                 "tokenId": listing["tokenId"],
@@ -333,7 +339,6 @@ def settlePurchaseOrder(request):
     """
     if request.method == "POST":
         data = json.loads(request.body)
-        print("DATA: ", data)
 
         try:
             validated_data = NFTSettle(**data)
@@ -414,6 +419,91 @@ def settlePurchaseOrder(request):
 
             return JsonResponse({
                 "message": "Transaction successful created.",
+                "txHash": tx_hash
+            },
+                status=200
+            )
+        except ValidationError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+def settleAuctionOrder(request):
+    """
+    Handle the settlement of NFT auction.
+    """
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        try:
+            validated_data = NFTSettle(**data)
+
+            sale_id = validated_data.sale_id
+            owner_approval_sig = validated_data.owner_approval_sig,
+            owner_address = validated_data.owner_address
+
+            if not all([sale_id, owner_approval_sig, owner_address]):
+                return JsonResponse(
+                    {"error": "Missing required fields"}, status=400)
+
+            # Extract the latest bid for the given sale_id
+            bids_for_sale = bid_intents.get(sale_id)
+            if not bids_for_sale:
+                return JsonResponse(
+                    {"error": "No bids for this sale id"}, status=404)
+
+            latest_bid = bids_for_sale[-1]
+
+            w3_instance = Web3(Web3.HTTPProvider(config("PROVIDER_URL")))
+
+            message = w3_instance.solidity_keccak(['address',
+                                                   'address',
+                                                   'uint256',
+                                                   'uint256'],
+                                                  [latest_bid["nftCollectionAddress"],
+                                                   latest_bid["erc20Address"],
+                                                   latest_bid["tokenId"],
+                                                   int(latest_bid["erc20Amount"])])
+
+            signable_message = encode_defunct(hexstr=message.hex())
+
+            recovered_bidder_address = w3_instance.eth.account.recover_message(
+                signable_message,
+                signature=latest_bid["bidderSig"]
+            )
+
+            if recovered_bidder_address != latest_bid["bidderAddress"]:
+                return JsonResponse(
+                    {"error": "Signature does not match the provided bidder address."}, status=404)
+
+            hashed_bidder_sig = w3_instance.solidity_keccak(
+                ['bytes'], [latest_bid["bidderSig"]])
+            signable_message = encode_defunct(hexstr=hashed_bidder_sig.hex())
+
+            if isinstance(owner_approval_sig,
+                          tuple) and len(owner_approval_sig) == 1:
+                owner_approval_sig = owner_approval_sig[0]
+
+            recovered_owner_address = w3_instance.eth.account.recover_message(
+                signable_message,
+                signature=owner_approval_sig
+            )
+
+            if recovered_owner_address != owner_address:
+                return JsonResponse(
+                    {"error": "Signature does not match the provided owner address."}, status=404)
+
+            marketplaceContract = MarketplaceContract()
+            tx_hash = marketplaceContract.send_transaction(
+                latest_bid["nftCollectionAddress"],
+                latest_bid["tokenId"],
+                latest_bid["erc20Address"],
+                latest_bid["erc20Amount"],
+                latest_bid["bidderSig"],
+                owner_approval_sig,
+                owner_address)
+
+            return JsonResponse({
+                "message": "Transaction successfully created.",
                 "txHash": tx_hash
             },
                 status=200

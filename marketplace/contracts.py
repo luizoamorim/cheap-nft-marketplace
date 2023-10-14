@@ -62,6 +62,17 @@ class ERC721Contract:
         """
         return self.get_owner_of_token(token_id) == address
 
+    def mint(self, owner_address):        
+
+        txn = self.contract.functions.mint(owner_address).build_transaction({
+            'chainId': YOUR_CHAIN_ID,
+            'gas': YOUR_GAS_LIMIT,
+            'gasPrice': w3.toWei('20', 'gwei'),
+            'nonce': w3.eth.get_transaction_count(owner_address)
+        })
+
+        return txn
+
 
 class MarketplaceContract:
     PROVIDER_URL = config('PROVIDER_URL')

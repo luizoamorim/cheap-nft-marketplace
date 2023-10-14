@@ -25,4 +25,6 @@ urlpatterns = [
     path("bidOrder/", views.bid_order, name="bid_order"),
     path("settlePurchaseOrder/", views.settlePurchaseOrder,
          name="settlePurchaseOrder"),
+    path("settleAuctionOrder/", views.settleAuctionOrder,
+         name="settleAuctionOrder"),
 ]
