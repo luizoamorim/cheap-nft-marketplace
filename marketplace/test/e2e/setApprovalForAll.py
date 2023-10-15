@@ -31,7 +31,7 @@ account = w3.eth.account.from_key(ARTIST_PRIVATE_KEY)
 
 def main():    
     print("Running")
-    transaction = erc721Contract.mint(ARTIST_ADDRESS)
+    transaction = erc721Contract.setApprovalForAll()
     
     signed_txn = w3.eth.account.sign_transaction(transaction, ARTIST_PRIVATE_KEY)
     print("Signed txn: ",signed_txn)

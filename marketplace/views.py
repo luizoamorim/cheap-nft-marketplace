@@ -127,7 +127,7 @@ def list_nft(request):
             )
 
             return JsonResponse(
-                {"message": "Listing added successfully"}, status=201)
+                {"message": "Listing added successfully", "saleId": sales}, status=201)
 
         except ValidationError as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -332,7 +332,7 @@ def bid_order(request):
     else:
         return HttpResponse(status=405)
 
-
+@csrf_exempt
 def settlePurchaseOrder(request):
     """
     Handle the settlement of NFT.
@@ -372,7 +372,7 @@ def settlePurchaseOrder(request):
                                                   [purchase_intent["nftCollectionAddress"],
                                                    purchase_intent["erc20Address"],
                                                    purchase_intent["tokenId"],
-                                                   int(purchase_intent["erc20_amount"])])
+                                                   int(purchase_intent["erc20Amount"])])
 
             # Encode the message and recover the buyer signature
             signable_message = encode_defunct(hexstr=message.hex())
@@ -412,7 +412,7 @@ def settlePurchaseOrder(request):
                 purchase_intent["nftCollectionAddress"],
                 purchase_intent["tokenId"],
                 purchase_intent["erc20Address"],
-                purchase_intent["erc20_amount"],
+                purchase_intent["erc20Amount"],
                 purchase_intent["buyerSig"],
                 owner_approval_sig,
                 owner_address)

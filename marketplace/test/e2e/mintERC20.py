@@ -7,18 +7,18 @@ sys.path.append(BASE_DIR)
 
 from decouple import config
 from web3 import Web3
-from contracts import ERC721Contract
+from contracts import ERC20Contract
 
 
 # Configuration
 INFURA_URL = config('PROVIDER_URL')
-ARTIST_PRIVATE_KEY = config('ARTIST_PRIVATE_KEY')
-ARTIST_ADDRESS = config('ARTIST_ADDRESS')
+COLLECTOR_PRIVATE_KEY = config('COLLECTOR_PRIVATE_KEY')
+COLLECTOR_ADDRESS = config('COLLECTOR_ADDRESS')
 YOUR_CHAIN_ID = config('CHAIN_ID')
 YOUR_GAS_LIMIT = config('GAS_LIMIT')
-CONTRACT_ADDRESS = config('MOCK_ERC721_CONTRACT_ADDRESS')
+CONTRACT_ADDRESS = config('MOCK_ERC20_CONTRACT_ADDRESS')
 
-erc721Contract = ERC721Contract()  # Moved instantiation outside the loop
+erc20Contract = ERC20Contract()  # Moved instantiation outside the loop
 
 w3 = Web3(Web3.HTTPProvider(INFURA_URL))
 if w3.is_connected():
@@ -27,13 +27,13 @@ else:
     print("Not connected!")
     exit()
 
-account = w3.eth.account.from_key(ARTIST_PRIVATE_KEY)
+account = w3.eth.account.from_key(COLLECTOR_PRIVATE_KEY)
 
 def main():    
     print("Running")
-    transaction = erc721Contract.mint(ARTIST_ADDRESS)
+    transaction = erc20Contract.mint(COLLECTOR_ADDRESS, 10000000000000000000)
     
-    signed_txn = w3.eth.account.sign_transaction(transaction, ARTIST_PRIVATE_KEY)
+    signed_txn = w3.eth.account.sign_transaction(transaction, COLLECTOR_PRIVATE_KEY)
     print("Signed txn: ",signed_txn)
     txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     print(f"Transaction hash: {txn_hash.hex()}")
