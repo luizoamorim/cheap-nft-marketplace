@@ -18,23 +18,26 @@ TOKEN_ID = config('TOKEN_ID')
 
 w3 = Web3(Web3.HTTPProvider(INFURA_URL))
 
+
 def list_nft(data):
     response = requests.post(f"{BASE_URL}/list/", json=data)
     return response.json()
+
 
 def purchase_nft(data):
     # Create a message to be signed
     message = w3.solidity_keccak(
         ['address', 'address', 'uint256', 'uint256'],
-        [data.get('nftCollectionAddress'),
+        [data.get('nft_collection_address'),
          data.get('erc20Address'),
          int(data.get('tokenId')),
-         int(data.get('erc20Amount'))]
+         int(data.get('erc20_amount'))]
     )
 
     # Sign the message
     signable_message = encode_defunct(hexstr=message.hex())
-    signature = w3.eth.account.sign_message(signable_message, private_key=COLLECTOR_PRIVATE_KEY)
+    signature = w3.eth.account.sign_message(
+        signable_message, private_key=COLLECTOR_PRIVATE_KEY)
 
     # Update the data with signature and buyer address
     data.update({'bidderSig': signature.signature.hex()})
@@ -52,27 +55,31 @@ def settle_purchase_order(sale_id, collector_signature):
     buyer_signature_hash = w3.solidity_keccak(['bytes'], [collector_signature])
 
     # Encode the hash for signing
-    signable_buyer_signature_hash = encode_defunct(hexstr=buyer_signature_hash.hex())
+    signable_buyer_signature_hash = encode_defunct(
+        hexstr=buyer_signature_hash.hex())
 
     # Artist signs the hash of buyer's signature using their private key
-    artist_signature = w3.eth.account.sign_message(signable_buyer_signature_hash, private_key=ARTIST_PRIVATE_KEY)
+    artist_signature = w3.eth.account.sign_message(
+        signable_buyer_signature_hash, private_key=ARTIST_PRIVATE_KEY)
 
     body_data = {
         "sale_id": sale_id,  # This might be dynamic, so you can adjust accordingly
         "owner_approval_sig": artist_signature.signature.hex(),
         "owner_address": ARTIST_ADDRESS
     }
-    response = requests.post(f"{BASE_URL}/settlePurchaseOrder/", json=body_data)
+    response = requests.post(
+        f"{BASE_URL}/settle_purchase_order/",
+        json=body_data)
     return response.json()
 
 
 if __name__ == "__main__":
     # Listing an NFT
     list_data = {
-        "nftCollectionAddress": MOCK_ERC721_CONTRACT_ADDRESS,
+        "nft_collection_address": MOCK_ERC721_CONTRACT_ADDRESS,
         "tokenId": int(TOKEN_ID),
         "erc20Address": MOCK_ERC20_CONTRACT_ADDRESS,
-        "erc20Amount": 10500000000000000,
+        "erc20_amount": 10500000000000000,
         "isAuction": False,
         "ownerAddress": ARTIST_ADDRESS
     }
@@ -80,23 +87,24 @@ if __name__ == "__main__":
     list_response = list_nft(list_data)
     print(f"Listing Response: {list_response}")
 
-    sale_id = list_response.get("saleId")
+    sale_id = list_response.get("sale_id")
 
     if sale_id:
         # Purchasing the listed NFT
         purchase_data = {
-            "nftCollectionAddress": MOCK_ERC721_CONTRACT_ADDRESS,
+            "nft_collection_address": MOCK_ERC721_CONTRACT_ADDRESS,
             "tokenId": TOKEN_ID,
             "erc20Address": MOCK_ERC20_CONTRACT_ADDRESS,
-            "erc20Amount": 10500000000000000,
+            "erc20_amount": 10500000000000000,
             "bidderSig": "",
             "buyerAddress": "",
-            "saleId": sale_id
+            "sale_id": sale_id
         }
 
         purchase_response = purchase_nft(purchase_data)
 
-        settle_response = settle_purchase_order(sale_id, purchase_response.get("bidderSig"))
+        settle_response = settle_purchase_order(
+            sale_id, purchase_response.get("bidderSig"))
         print(f"Settle Response: {settle_response}")
 
         # Extract the transaction from the response
@@ -104,7 +112,8 @@ if __name__ == "__main__":
         unsigned_transaction['chainId'] = int(unsigned_transaction['chainId'])
 
         # Sign the transaction
-        signed_txn = w3.eth.account.sign_transaction(unsigned_transaction, ARTIST_PRIVATE_KEY)
+        signed_txn = w3.eth.account.sign_transaction(
+            unsigned_transaction, ARTIST_PRIVATE_KEY)
         print("Signed txn: ", signed_txn)
 
         # Send the signed transaction

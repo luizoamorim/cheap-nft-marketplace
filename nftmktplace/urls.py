@@ -23,8 +23,8 @@ urlpatterns = [
     path("list/", views.list_nft, name="list_nft"),
     path("purchaseOrder/", views.purchase_order, name="purchase_order"),
     path("bidOrder/", views.bid_order, name="bid_order"),
-    path("settlePurchaseOrder/", views.settlePurchaseOrder,
-         name="settlePurchaseOrder"),
-    path("settleAuctionOrder/", views.settleAuctionOrder,
-         name="settleAuctionOrder"),
+    path("settle_purchase_order/", views.settle_purchase_order,
+         name="settle_purchase_order"),
+    path("settle_auction_order/", views.settle_auction_order,
+         name="settle_auction_order"),
 ]

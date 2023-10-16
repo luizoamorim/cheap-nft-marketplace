@@ -38,7 +38,7 @@ def find_listing(sale_id):
     - dict: The details of the NFT listing if found. Otherwise, returns None.
     """
     for listing in listings:
-        if listing.get("saleId") == sale_id:
+        if listing.get("sale_id") == sale_id:
             return listing
     return None
 
@@ -54,7 +54,7 @@ def find_purchase_intents(sale_id):
     - dict: The details of the NFT listing if found. Otherwise, returns None.
     """
     for purchase_intent in purchase_intents:
-        if purchase_intent.get("saleId") == sale_id:
+        if purchase_intent.get("sale_id") == sale_id:
             return purchase_intent
     return None
 
@@ -63,7 +63,6 @@ def find_purchase_intents(sale_id):
 
 @csrf_exempt
 def list_nft(request):
-    global sales
     """
     Handle the listing of NFTs.
 
@@ -80,23 +79,25 @@ def list_nft(request):
     - JsonResponse: A JSON response containing either a success message and status code
       or an error message and status code.
     """
+    global sales
+
     if request.method == "POST":
         data = json.loads(request.body)
 
         try:
             validated_data = NFTListing(**data)
             # Extracting details from the received data
-            nftCollectionAddress = validated_data.nftCollectionAddress
+            nft_collection_address = validated_data.nft_collection_address
             token_id = validated_data.tokenId
             erc20_address = validated_data.erc20Address
-            erc20_amount = validated_data.erc20Amount
+            erc20_amount = validated_data.erc20_amount
             is_auction = validated_data.isAuction
             owner_address = validated_data.ownerAddress
 
             # If validation passes, add the data to your in-memory listings
 
             # Check if all required details are provided
-            if not all([nftCollectionAddress, token_id,
+            if not all([nft_collection_address, token_id,
                        erc20_address, erc20_amount, owner_address]):
                 return JsonResponse(
                     {"error": "Missing required fields"}, status=400)
@@ -114,8 +115,8 @@ def list_nft(request):
             # Add to our in-memory listings
             listings.append(
                 {
-                    "saleId": sales,
-                    "nftCollectionAddress": nftCollectionAddress,
+                    "sale_id": sales,
+                    "nft_collection_address": nft_collection_address,
                     "tokenId": token_id,
                     "erc20Address": erc20_address,
                     "erc20_amount": erc20_amount,
@@ -127,7 +128,7 @@ def list_nft(request):
             )
 
             return JsonResponse(
-                {"message": "Listing added successfully", "saleId": sales}, status=201)
+                {"message": "Listing added successfully", "sale_id": sales}, status=201)
 
         except ValidationError as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -150,13 +151,13 @@ def purchase_order(request):
         try:
             validated_data = NFTPurchaseIntent(**data)
 
-            nft_collection_address = validated_data.nftCollectionAddress
+            nft_collection_address = validated_data.nft_collection_address
             token_id = validated_data.tokenId
             erc20_address = validated_data.erc20Address
-            erc20_amount = validated_data.erc20Amount
+            erc20_amount = validated_data.erc20_amount
             bidder_sig = validated_data.bidderSig
             buyer_address = validated_data.buyerAddress
-            sale_id = validated_data.saleId
+            sale_id = validated_data.sale_id
 
             # Check if all required details are provided
             if not all([nft_collection_address,
@@ -181,25 +182,30 @@ def purchase_order(request):
                     {"error": "Listing is not a traditional purchase"}, status=400)
 
             # should not be able to add a new purchase if already exist an
-            # intent with the saleId
+            # intent with the sale_id
             for intent in purchase_intents:
-                if intent["saleId"] == sale_id:
+                if intent["sale_id"] == sale_id:
                     return JsonResponse(
                         {"error": "Purchase intent already exist"}, status=400)
 
             # The purchase intent amount must be equal to the listing price
             if listing["erc20_amount"] != erc20_amount:
                 return JsonResponse(
-                    {"error": "Purchase intent amount must be equal to the listing price"}, status=400)
+                    {"error":
+                     "Purchase intent amount must be equal to the listing price"
+                     },
+                    status=400
+                )
 
             # Create a web3 instance
             w3_instance = Web3(Web3.HTTPProvider(config("PROVIDER_URL")))
 
             # Recreate the message hash
-            message = w3_instance.solidity_keccak(['address', 'address', 'uint256', 'uint256'],
-                                                  [nft_collection_address, erc20_address, token_id, int(
-                                                      erc20_amount)]
-                                                  )
+            message = w3_instance.solidity_keccak(
+                ['address', 'address', 'uint256', 'uint256'],
+                [nft_collection_address, erc20_address, token_id, int(
+                    erc20_amount)]
+            )
 
             # Encode the message and recover the buyer signature
             signable_message = encode_defunct(hexstr=message.hex())
@@ -215,11 +221,11 @@ def purchase_order(request):
 
             # Construct purchase data
             purchase_intent = {
-                "saleId": sale_id,
-                "nftCollectionAddress": listing["nftCollectionAddress"],
+                "sale_id": sale_id,
+                "nft_collection_address": listing["nft_collection_address"],
                 "tokenId": listing["tokenId"],
                 "erc20Address": listing["erc20Address"],
-                "erc20Amount": erc20_amount,
+                "erc20_amount": erc20_amount,
                 "buyerSig": bidder_sig,
                 "buyerAddress": buyer_address,
                 "createdAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -245,13 +251,13 @@ def bid_order(request):
         try:
             validated_data = NFTPurchaseIntent(**data)
 
-            nft_collection_address = validated_data.nftCollectionAddress
+            nft_collection_address = validated_data.nft_collection_address
             token_id = validated_data.tokenId
             erc20_address = validated_data.erc20Address
-            erc20_amount = validated_data.erc20Amount
+            erc20_amount = validated_data.erc20_amount
             bidder_sig = validated_data.bidderSig
             buyer_address = validated_data.buyerAddress
-            sale_id = validated_data.saleId
+            sale_id = validated_data.sale_id
 
             # Check if all required details are provided
             if not all([nft_collection_address,
@@ -284,7 +290,7 @@ def bid_order(request):
             # Check if the auction has already started
             latest_bid = bid_intents[sale_id][- 1] if sale_id in bid_intents else None
 
-            if latest_bid and latest_bid["erc20Amount"] >= erc20_amount:
+            if latest_bid and latest_bid["erc20_amount"] >= erc20_amount:
                 # Ensure the bid is higher than the current bid
                 return JsonResponse(
                     {"error": "Bid must be higher than the current bid"}, status=400
@@ -294,10 +300,11 @@ def bid_order(request):
             w3_instance = Web3(Web3.HTTPProvider(config("PROVIDER_URL")))
 
             # Recreate the message hash
-            message = w3_instance.solidity_keccak(['address', 'address', 'uint256', 'uint256'],
-                                                  [nft_collection_address, erc20_address, token_id, int(
-                                                      erc20_amount)]
-                                                  )
+            message = w3_instance.solidity_keccak(
+                ['address', 'address', 'uint256', 'uint256'],
+                [nft_collection_address, erc20_address, token_id, int(
+                    erc20_amount)]
+            )
 
             # Encode the message and recover the buyer signature
             signable_message = encode_defunct(hexstr=message.hex())
@@ -313,11 +320,11 @@ def bid_order(request):
 
             # Construct auction data
             bid_intent = {
-                "sale_id": listing["saleId"],
-                "nftCollectionAddress": listing["nftCollectionAddress"],
+                "sale_id": listing["sale_id"],
+                "nft_collection_address": listing["nft_collection_address"],
                 "erc20Address": listing["erc20Address"],
                 "tokenId": listing["tokenId"],
-                "erc20Amount": erc20_amount,
+                "erc20_amount": erc20_amount,
                 "bidderSig": bidder_sig,
                 "bidderAddress": buyer_address,
                 "createdAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -332,8 +339,9 @@ def bid_order(request):
     else:
         return HttpResponse(status=405)
 
+
 @csrf_exempt
-def settlePurchaseOrder(request):
+def settle_purchase_order(request):
     """
     Handle the settlement of NFT.
     """
@@ -344,7 +352,7 @@ def settlePurchaseOrder(request):
             validated_data = NFTSettle(**data)
 
             sale_id = validated_data.sale_id
-            owner_approval_sig = validated_data.owner_approval_sig,
+            owner_approval_sig = validated_data.owner_approval_sig
             owner_address = validated_data.owner_address
 
             # Check if all required details are provided
@@ -369,10 +377,10 @@ def settlePurchaseOrder(request):
                                                    'address',
                                                    'uint256',
                                                    'uint256'],
-                                                  [purchase_intent["nftCollectionAddress"],
+                                                  [purchase_intent["nft_collection_address"],
                                                    purchase_intent["erc20Address"],
                                                    purchase_intent["tokenId"],
-                                                   int(purchase_intent["erc20Amount"])])
+                                                   int(purchase_intent["erc20_amount"])])
 
             # Encode the message and recover the buyer signature
             signable_message = encode_defunct(hexstr=message.hex())
@@ -407,12 +415,12 @@ def settlePurchaseOrder(request):
                 return JsonResponse(
                     {"error": "Signature does not match the provided owner address."}, status=404)
 
-            marketplaceContract = MarketplaceContract()
-            tx_hash = marketplaceContract.send_transaction(
-                purchase_intent["nftCollectionAddress"],
+            marketplace_contract = MarketplaceContract()
+            tx_hash = marketplace_contract.send_transaction(
+                purchase_intent["nft_collection_address"],
                 purchase_intent["tokenId"],
                 purchase_intent["erc20Address"],
-                purchase_intent["erc20Amount"],
+                purchase_intent["erc20_amount"],
                 purchase_intent["buyerSig"],
                 owner_approval_sig,
                 owner_address)
@@ -427,7 +435,7 @@ def settlePurchaseOrder(request):
             return JsonResponse({"error": str(e)}, status=400)
 
 
-def settleAuctionOrder(request):
+def settle_auction_order(request):
     """
     Handle the settlement of NFT auction.
     """
@@ -438,7 +446,7 @@ def settleAuctionOrder(request):
             validated_data = NFTSettle(**data)
 
             sale_id = validated_data.sale_id
-            owner_approval_sig = validated_data.owner_approval_sig,
+            owner_approval_sig = validated_data.owner_approval_sig
             owner_address = validated_data.owner_address
 
             if not all([sale_id, owner_approval_sig, owner_address]):
@@ -446,7 +454,9 @@ def settleAuctionOrder(request):
                     {"error": "Missing required fields"}, status=400)
 
             # Extract the latest bid for the given sale_id
+            print("bid_intents: ", bid_intents)
             bids_for_sale = bid_intents.get(sale_id)
+            print("BID_FOR_SALE: ", bids_for_sale)
             if not bids_for_sale:
                 return JsonResponse(
                     {"error": "No bids for this sale id"}, status=404)
@@ -459,10 +469,10 @@ def settleAuctionOrder(request):
                                                    'address',
                                                    'uint256',
                                                    'uint256'],
-                                                  [latest_bid["nftCollectionAddress"],
+                                                  [latest_bid["nft_collection_address"],
                                                    latest_bid["erc20Address"],
                                                    latest_bid["tokenId"],
-                                                   int(latest_bid["erc20Amount"])])
+                                                   int(latest_bid["erc20_amount"])])
 
             signable_message = encode_defunct(hexstr=message.hex())
 
@@ -492,12 +502,12 @@ def settleAuctionOrder(request):
                 return JsonResponse(
                     {"error": "Signature does not match the provided owner address."}, status=404)
 
-            marketplaceContract = MarketplaceContract()
-            tx_hash = marketplaceContract.send_transaction(
-                latest_bid["nftCollectionAddress"],
+            marketplace_contract = MarketplaceContract()
+            tx_hash = marketplace_contract.send_transaction(
+                latest_bid["nft_collection_address"],
                 latest_bid["tokenId"],
                 latest_bid["erc20Address"],
-                latest_bid["erc20Amount"],
+                latest_bid["erc20_amount"],
                 latest_bid["bidderSig"],
                 owner_approval_sig,
                 owner_address)

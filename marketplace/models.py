@@ -17,10 +17,10 @@ class NFTListing(BaseModel):
     token ID, price, auction status and owner address.
     """
 
-    nftCollectionAddress: str
+    nft_collection_address: str
     tokenId: int
     erc20Address: str
-    erc20Amount: float
+    erc20_amount: float
     isAuction: bool
     ownerAddress: str
 
@@ -33,13 +33,13 @@ class NFTPurchaseIntent(BaseModel):
     collectionAddress, tokenId, bid, and the necessary signatures for verification.
     """
 
-    nftCollectionAddress: str
+    nft_collection_address: str
     tokenId: int
     erc20Address: str
-    erc20Amount: float
+    erc20_amount: float
     bidderSig: str
     buyerAddress: str
-    saleId: int
+    sale_id: int
 
 
 class NFTSettle(BaseModel):
@@ -47,7 +47,7 @@ class NFTSettle(BaseModel):
     Data model representing an intent to settle an NFT.
 
     This model captures essential details required for the purchase, including
-    saleId and the necessary signatures for verification.
+    sale_id and the necessary signatures for verification.
     """
 
     sale_id: int

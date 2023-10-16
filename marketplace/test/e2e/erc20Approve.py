@@ -1,13 +1,15 @@
+from contracts import ERC20Contract
+from web3 import Web3
+from decouple import config
 import json
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__))))
 sys.path.append(BASE_DIR)
-
-from decouple import config
-from web3 import Web3
-from contracts import ERC20Contract
 
 
 # Configuration
@@ -30,14 +32,18 @@ else:
 
 account = w3.eth.account.from_key(COLLECTOR_PRIVATE_KEY)
 
-def main():    
+
+def main():
     print("Running")
-    transaction = erc20Contract.approve(MARKETPLACE_CONTRACT_ADDRESS, 10500000000000000)
-    
-    signed_txn = w3.eth.account.sign_transaction(transaction, COLLECTOR_PRIVATE_KEY)
-    print("Signed txn: ",signed_txn)
+    transaction = erc20Contract.approve(
+        MARKETPLACE_CONTRACT_ADDRESS, 10500000000000000)
+
+    signed_txn = w3.eth.account.sign_transaction(
+        transaction, COLLECTOR_PRIVATE_KEY)
+    print("Signed txn: ", signed_txn)
     txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     print(f"Transaction hash: {txn_hash.hex()}")
+
 
 if __name__ == "__main__":
     main()

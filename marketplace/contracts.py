@@ -8,6 +8,7 @@ from web3 import Web3
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 class ERC20Contract:
     """
     A class to interact with the ERC20 smart contract on the Ethereum blockchain.
@@ -40,12 +41,27 @@ class ERC20Contract:
             address=self.contract_address,
             abi=self.MOCK_ERC20_ABI
         )
-    
+
     def get_contract_instance(self):
+        """
+        Get the ERC20 contract instance.
+
+        Returns:
+            Contract: An instance of the ERC20 smart contract.
+        """
         return self.contract
 
-    def mint(self, owner_address, amount):        
+    def mint(self, owner_address, amount):
+        """
+        Create a minting transaction for the ERC20 contract.
 
+        Args:
+            owner_address (str): The address of the owner to receive the minted tokens.
+            amount (int): The amount of tokens to mint.
+
+        Returns:
+            dict: A dictionary representing the minting transaction.
+        """
         txn = self.contract.functions.mint(owner_address, int(amount)).build_transaction({
             'chainId': int(config("CHAIN_ID")),
             'gas': int(config("GAS_LIMIT")),
@@ -55,16 +71,28 @@ class ERC20Contract:
 
         return txn
 
-    def approve(self, spender_address, amount):        
+    def approve(self, spender_address, amount):
+        """
+        Create an approval transaction for the ERC20 contract.
 
-        txn = self.contract.functions.approve(spender_address, int(amount)).build_transaction({
-            'chainId': int(config("CHAIN_ID")),
-            'gas': int(config("GAS_LIMIT")),
-            'gasPrice': self.w3.to_wei('20', 'gwei'),
-            'nonce': self.w3.eth.get_transaction_count(config('COLLECTOR_ADDRESS'))
-        })
+        Args:
+            spender_address (str): The address of the spender to approve for spending tokens.
+            amount (int): The amount of tokens to approve for spending.
+
+        Returns:
+            dict: A dictionary representing the approval transaction.
+        """
+        txn = self.contract.functions.approve(
+            spender_address, int(amount)).build_transaction(
+            {
+                'chainId': int(
+                    config("CHAIN_ID")), 'gas': int(
+                    config("GAS_LIMIT")), 'gasPrice': self.w3.to_wei(
+                        '20', 'gwei'), 'nonce': self.w3.eth.get_transaction_count(
+                            config('COLLECTOR_ADDRESS'))})
 
         return txn
+
 
 class ERC721Contract:
     """
@@ -98,8 +126,14 @@ class ERC721Contract:
             address=self.contract_address,
             abi=self.MOCK_ERC721_ABI
         )
-    
+
     def get_contract_instance(self):
+        """
+        Get the ERC721 contract instance.
+
+        Returns:
+            Contract: An instance of the ERC721 smart contract.
+        """
         return self.contract
 
     def get_owner_of_token(self, token_id):
@@ -122,8 +156,16 @@ class ERC721Contract:
         """
         return self.get_owner_of_token(token_id) == address
 
-    def mint(self, owner_address):        
+    def mint(self, owner_address):
+        """
+        Create a minting transaction for the ERC721 contract.
 
+        Args:
+            owner_address (str): The address of the owner to receive the minted token.
+
+        Returns:
+            dict: A dictionary representing the minting transaction.
+        """
         txn = self.contract.functions.mint(owner_address).build_transaction({
             'chainId': int(config("CHAIN_ID")),
             'gas': int(config("GAS_LIMIT")),
@@ -133,19 +175,36 @@ class ERC721Contract:
 
         return txn
 
-    def setApprovalForAll(self):        
+    def set_approval_for_all(self):
+        """
+        Create an approval transaction to set marketplace approval for all tokens.
 
-        txn = self.contract.functions.setApprovalForAll(config('MARKETPLACE_ADDRESS'), True).build_transaction({
-            'chainId': int(config("CHAIN_ID")),
-            'gas': int(config("GAS_LIMIT")),
-            'gasPrice': self.w3.to_wei('20', 'gwei'),
-            'nonce': self.w3.eth.get_transaction_count(config('ARTIST_ADDRESS'))
-        })
+        Returns:
+            dict: A dictionary representing the approval transaction.
+        """
+        txn = self.contract.functions.set_approval_for_all(
+            config('MARKETPLACE_ADDRESS'), True).build_transaction(
+            {
+                'chainId': int(
+                    config("CHAIN_ID")), 'gas': int(
+                    config("GAS_LIMIT")), 'gasPrice': self.w3.to_wei(
+                        '20', 'gwei'), 'nonce': self.w3.eth.get_transaction_count(
+                            config('ARTIST_ADDRESS'))})
 
         return txn
 
 
 class MarketplaceContract:
+    """
+    A class to interact with the Marketplace smart contract on the Ethereum blockchain.
+
+    Attributes:
+        PROVIDER_URL (str): The Ethereum network provider's URL.
+        MARKETPLACE_ADDRESS (str): The Ethereum address of the Marketplace contract.
+        MARKETPLACE_ABI_PATH (str): Path to the ABI (Application Binary Interface) of
+            the Marketplace contract.
+        MARKETPLACE_ABI (list): Loaded ABI content from the JSON file.
+    """
     PROVIDER_URL = config('PROVIDER_URL')
     MARKETPLACE_ADDRESS = config('MARKETPLACE_ADDRESS')
     MARKETPLACE_ABI_PATH = os.path.join(
@@ -165,7 +224,7 @@ class MarketplaceContract:
         self.contract = self.w3.eth.contract(
             address=self.contract_address,
             abi=self.MARKETPLACE_ABI
-        )    
+        )
 
     def send_transaction(
             self,
@@ -176,6 +235,21 @@ class MarketplaceContract:
             bidder_sig,
             owner_approval_sig,
             owner_address):
+        """
+        Send a transaction to the Marketplace contract to finish an auction.
+
+        Args:
+            nft_collection_address (str): The address of the NFT collection.
+            token_id (int): The ID of the NFT token.
+            erc20_address (str): The address of the ERC20 token.
+            erc20_amount (int): The amount of ERC20 tokens.
+            bidder_sig (str): The signature of the bidder.
+            owner_approval_sig (str): The signature of the owner's approval.
+            owner_address (str): The address of the owner.
+
+        Returns:
+            dict: The transaction object.
+        """
 
         # Decompose the auction_data dictionary into a tuple
         auction_tuple = (

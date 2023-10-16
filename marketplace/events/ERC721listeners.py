@@ -19,13 +19,15 @@ if not w3.is_connected():
     print("Not connected to Ethereum network!")
     exit()
 
+
 def listen_for_transfer_events():
     # Event signature for Transfer event
-    transfer_event_signature = w3.keccak(text="Transfer(address,address,uint256)").hex()
+    transfer_event_signature = w3.keccak(
+        text="Transfer(address,address,uint256)").hex()
 
     # Create a filter for catching Transfer events
     event_filter = w3.eth.filter({
-        "fromBlock": "latest", 
+        "fromBlock": "latest",
         "address": config('MOCK_ERC721_CONTRACT_ADDRESS'),
         "topics": [transfer_event_signature]
     })
@@ -35,13 +37,15 @@ def listen_for_transfer_events():
     contract_instance = erc721Contract.get_contract_instance()
 
     while True:
-        events = event_filter.get_new_entries()        
+        events = event_filter.get_new_entries()
         for event in events:
             decoded_event = contract_instance.events.Transfer().process_log(event)
             print(decoded_event)
 
-        # Use sleep to prevent spamming (you can adjust the sleep time as desired)
+        # Use sleep to prevent spamming (you can adjust the sleep time as
+        # desired)
         time.sleep(10)
+
 
 if __name__ == "__main__":
     listen_for_transfer_events()

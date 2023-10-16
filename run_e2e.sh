@@ -15,7 +15,7 @@ sleep 30  # wait for 30 seconds
 
 # Set approval for all
 echo "Setting approval for all..."
-python3 ./marketplace/test/e2e/setApprovalForAll.py 
+python3 ./marketplace/test/e2e/set_approval_for_all.py 
 sleep 30  # wait for 30 seconds
 
 # Purchase operation
