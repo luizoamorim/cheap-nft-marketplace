@@ -1,3 +1,4 @@
+from contracts import ERC721Contract
 import os
 import sys
 import time
@@ -7,7 +8,6 @@ from web3 import Web3
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
-from contracts import ERC721Contract
 
 # Configuration
 INFURA_URL = config('PROVIDER_URL')

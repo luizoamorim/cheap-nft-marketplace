@@ -1,4 +1,3 @@
-from contracts import ERC721Contract
 from web3 import Web3
 from decouple import config
 import json
@@ -10,6 +9,8 @@ BASE_DIR = os.path.dirname(
         os.path.dirname(
             os.path.abspath(__file__))))
 sys.path.append(BASE_DIR)
+
+from contracts import ERC721Contract
 
 
 # Configuration
