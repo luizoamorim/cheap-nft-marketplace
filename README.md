@@ -184,7 +184,7 @@ pip install -r requirements.txt
 #### 4. 🧪 Testing
 
 ```
-run_tests.sh
+./run_tests.sh
 ```
 
 #### 5. Run the ERC721 listner to see the TokenID minted:
@@ -224,7 +224,7 @@ TOKEN_ID=230
 #### 8. Run the Development Server:
 
 ```
-python manage.py runserver
+run_server.sh
 ```
 
 You should see something like that:
@@ -237,6 +237,10 @@ Quit the server with CONTROL-C.
 Navigate to http://127.0.0.1:8000/ in your browser.
 
 #### 8. Run the e2e script:
+
+```
+./run_e2e.sh
+```
 
 - It will mint the quantity necessary of ERC20 for the Collector.
 - Will allow the marketplace exchange these tokens on collector's behalf.
